@@ -1,0 +1,20 @@
+extends layout
+block content
+	head
+		include ./head.jade
+		h3= title
+	include ./bsnavbar.jade
+	br
+	br
+	br
+	br
+	.container(align='center')
+		br
+		img(src='images/furnitureNeat.jpeg', alt='neat furniture', width='100%', height='70%', align='center')
+		br
+		h1(align='center') Inventorier, the site for keeping track of inventories!
+		br
+		a(href='signIn.html', float='left')
+		button.btn.btn-primary(type='button') sign in
+		a(href='createAcount.html')
+		button.btn.btn-primary(type='button') create acount
