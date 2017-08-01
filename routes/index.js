@@ -193,6 +193,7 @@ router.post('/addRemove', function(req, res){
 	var method = req.body.method;
 	var item = req.body.item;
 	var groupname = req.cookies.groupname;
+	var description = req.body.description;
 	var qty = req.body.qty;
 	MongoClient.connect(url, function(err, db){
 		if(err){
@@ -200,16 +201,16 @@ router.post('/addRemove', function(req, res){
 		} else {
 			var collection = db.collection('groups');
 			if(method === 'add'){
-				collection.find({name:groupname ,items:{$elemMatch:{item:item}}}).toArray(function(err, result){
+				collection.find({name:groupname ,items:{$elemMatch:{item:item, description:description}}}).toArray(function(err, result){
 					if(err){
 						console.log(err);
 					} else if(result.length){
 						var newQty = result[0].items.find(function(element){
-							return element.item === item
+							return element.item === item && element.description === description;
 						});
 						items = result[0].items
-						items[items.indexOf(newQty)].qty += qty; 
-						console.log(newQty);
+						console.log(parseInt(items[items.indexOf(newQty)]), parseInt(qty))
+						items[items.indexOf(newQty)].qty = JSON.stringify(parseInt(items[items.indexOf(newQty)].qty)+parseInt(qty)); 	
 						collection.update({name:groupname},{$set:{items:items}},function(err, records){
 							if (err){
 								console.log(err)
@@ -218,16 +219,23 @@ router.post('/addRemove', function(req, res){
 							res.redirect(303, '/group')
 							}
 						});
-						
 					} else {
-						collection.update({items:{$elemMatch:{item:item}}},{$push:{item:item,qty:qty}}, function(err, res){
+						collection.find({name:groupname}).toArray(function(err,result){
 							if(err){
 								console.log(err);
-							} else {
-								db.close();
-								res.redirect(303, '/group');
+							}else if(result.length){
+								items = result[0].items
+								collection.update({name:groupname},{$push:{items:{item:item,qty:qty,description:description,id:items.length}}}, function(err, res){
+									if(err){
+										console.log(err);
+									} else {
+										db.close();
+										res.clearCookie("error").redirect(303, '/group');
+									}
+								});
 							}
-						})
+						});
+						
 					}
 				});
 			} else if(method === 'remove'){
@@ -239,10 +247,14 @@ router.post('/addRemove', function(req, res){
 							return element.item === item
 						});
 						items = result[0].items
-						if (items[items.indexOf(newQty)] - qty <= 0){
+						if (parseInt(items[items.indexOf(newQty)].qty)-parseInt(qty) <= 0){
+							var loc = items.indexOf(newQty);
 							items.splice(items.indexOf(newQty));
+							for(var i = loc + 1;i<items.length;i++){
+								items[i].id --;
+							}
 						} else {
-							items[items.indexOf(newQty)] -= qty;
+							items[items.indexOf(newQty)].qty = JSON.stringify(parseInt(items[items.indexOf(newQty)].qty)-parseInt(qty));
 						}
 						collection.update({name:groupname},{$set:{items:items}},function(err, res){
 							if(err){
@@ -285,7 +297,7 @@ router.post('/adduser', function(req, res){
 							console.log(err);
 						} else if(result.length){
 							db.close();
-									res.cookie("error", "username taken", {expire: new Date + 9999}).redirect(303, 'createAcount');
+							res.cookie("error", "username taken", {expire: new Date + 9999}).redirect(303, 'createAcount');
 						} else {
 							collection.insert([user1], function (err, result){	    // Insert the student data
 								if (err) {

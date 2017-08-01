@@ -1,6 +1,6 @@
 extends layout
 block content
-	hea	d
+	head
 		include ./head.jade
 		h3= title
 	include ./bsnavbar2.jade
@@ -30,13 +30,16 @@ block content
 		form(action="/addRemove", method="POST")
 			.form-group
 				label(for="method") add or remove&nbsp;
-					select#method
+					select#method(name="method")
 						option(value="add") add
 						option(value="remove") remove
 			.form-group
 				label(for="item") item
-				input#item.form-control(type="text", placeholder="Enter item")
+				input#item.form-control(type="text", placeholder="Enter item" name="item")
 			.form-group
 				label(for="qty") amount
-				input#qty.form-control(type="number", placeholder="Enter amount")
+				input#qty.form-control(type="number", placeholder="Enter amount" name="qty")
+			.form-group
+				label(for="description") description
+				input#description.form-control(type="text", placeholder="Enter description", name="description")
 			button.btn.btn-primary(type="submit") modify
