@@ -1,0 +1,24 @@
+extends layout
+block content
+	head
+		include ./head.jade
+		h3= title
+	include ./bsnavbar2.jade
+	br
+	br
+	br
+	br
+	if error
+		div(class="alert alert-warning")
+			a(href="#", class="close", data-dismiss="alert", aria-label="close") &times;
+			strong= error
+	if groups
+		ul(type='none')
+			- for(i = 0;i < groups.length; i++){
+				li
+					form(action="/groupSel", method="POST")
+						button.btn.btn-primary(type="submit", id="groupsub", value ="#{groups[i].name}", name="groupsub")
+							| #{groups[i].name}&nbsp;
+							span.badge #{groups[i].updates}
+				br
+			- }
