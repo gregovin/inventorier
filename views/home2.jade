@@ -1,7 +1,6 @@
-extends layout
+extends layout1
 block content
 	head
-		include ./head.jade
 		h3= title
 	unless isAdmin
 		include ./bsnavbar2.jade
@@ -14,13 +13,34 @@ block content
 		div(class="alert alert-warning")
 			a(href="#", class="close", data-dismiss="alert", aria-label="close") &times;
 			strong= error
-	#userstuff(align='center')
-		h2= username
-		img(src='images/profiles/#{username}.jpeg')
-	div(style='margin-left:20px')
-	h3 Updates:
-	if updates
-		ul(type='none')
-			- for(i=0; i<updates.length;i ++){
-				li #{updates[i].elements} items were #{updates[i].affect} by #{updates[i].user} in #{updates[i].inventory} #{updates[i].time} hrs ago
-			- }
+	div(style="color:white")
+		#userstuff(align='center')
+			h2= username
+			img(src= img, alt = username + "'s profile picture", width="20%", height="20%")
+		div(style='margin-left:20px')
+		h3 Updates:
+		if updates
+			ul(type='none')
+				- for(i=0; i<updates.length && i < 10;i ++){
+					li #{updates[i].elements} items were #{updates[i].affect} by #{updates[i].user} in #{updates[i].inventory} #{updates[i].time} hrs ago
+				- }
+		h3 Change profile picture
+		form(action="/changePhoto",method="POST")
+			.form-group
+				label(for="link") Link to picture:
+				input#link.form-control(name="link",type="text",value = img, required="1")
+			button.btn.btn-primary(type="submit") change
+		h3 find user
+		form(action="/findUser", method="POST")
+			.form-group
+				label(for="username") username:
+				input#username.form-control(name="usr", type="text", placeholder="enter username", required='1')
+			button.btn.btn-primary(type="submit") search
+		br
+		br
+		br
+		br
+		if foundUser
+			img(style="float:left", src= foundUser.img, width="10%", height="10%")
+			br
+			h4 &nbsp;#{foundUser.username}
