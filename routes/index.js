@@ -92,21 +92,46 @@ router.get('/home2', function(req, res){
 			if(err){
 				console.log(err);
 			} else {
-				var collection = db.collection('updates')
+				var collection = db.collection('updates');
+				var collectionb = db.collection('users');
 				collection.find({notify:{$elemMatch:{user:req.cookies.username}}}).toArray(function(err, result){
 					if(err){
 						console.log(err)
 					} else {
-						var allUpdates = [];
+						for(var i = 0; i< result.length; i++){
+							result[i].time = Math.floor((new Date().getTime())/3600000 - result[i].time);
+						}
 						console.log(result);
-						res.render('home2', {username: req.cookies.username, updates : result})
-						db.close();
+						collectionb.find({username:req.cookies.username}).toArray(function(err, user){
+							if (err){
+								console.log(err);
+							}else{
+								if(user[0].admin){
+									db.close();
+									if (error && !(req.cookies.isAdmin)){
+										res.cookie('isAdmin',true, {expire:new Date() + 9999}).render('home2',{updates:result, username:req.cookies.username, isAdmin:true, error:error});
+									} else if (!(req.cookies.isAdmin) && !(error)){
+										res.cookie('isAdmin',true, {expire:new Date() + 9999}).render('home2',{updates:result, username:req.cookies.username, isAdmin:true});
+									} else if (error){
+										res.render('home2',{updates:result, username:req.cookies.username, isAdmin:true, error:error});
+									} else {
+										res.render('home2',{updates:result, username:req.cookies.username, isAdmin:true});
+									}
+								} else {
+									db.close();
+									if(error){
+										res.render('home2',{updates:result,username:req.cookies.username, error:error});
+									} else {
+										res.render('home2',{updates:result,username:req.cookies.username});
+									}
+								}
+
+							}
+						});
 					}
 				});
-				
 			}
-		})
-		
+		});
 	} else {
 		res.clearCookie('error').redirect(303, 'signin')
 	}
@@ -131,9 +156,17 @@ router.get('/groups', function(req, res){
 						}
 						console.log(allGroups)
 						if (req.cookies.error){
-							res.clearCookie('groupname').render('groups',{groups:allGroups, error:req.cookies.error});
+							if (req.cookies.isAdmin){
+								res.clearCookie('groupname').render('groups',{groups:allGroups, error:req.cookies.error, isAdmin:true});
+							} else {
+								res.clearCookie('groupname').render('groups',{groups:allGroups, error:req.cookies.error});
+							}
 						} else {
-							res.clearCookie('groupname').render('groups',{groups:allGroups});
+							if (req.cookies.isAdmin){
+								res.clearCookie('groupname').render('groups',{groups:allGroups, isAdmin:true});
+							} else {
+								res.clearCookie('groupname').render('groups',{groups:allGroups});
+							}
 						}
 						db.close()
 					}
@@ -155,6 +188,40 @@ router.post('/groupSel', function(req, res){
 		res.redirect(303, 'signin');
 	}
 });
+router.post('/makeGroup', function(req, res){
+	var groupName = req.body.name;
+	var MongoClient = mongodb.MongoClient;
+	url = 'mongodb://localhost:27017/things';
+	console.log('loading');
+	MongoClient.connect(url, function(err, db){
+		if(err){
+			console.log(err);
+		}else{
+			var collection = db.collection('groups');
+			collection.find({name:groupName},function(err, result){
+				if(err){
+					console.log(err);
+				}else if(result.length){
+					res.cookie("error", "group name already taken", {expire: new Date() + 9999}).redirect(303,'groups');
+				}else {
+					collection.find({}).toArray(function(err, results){
+						if(err){
+							console.log(err)
+						}else{
+							collection.insert({name:groupName, id:results.length+1,owner:req.cookies.username,users:[{user:req.cookies.username}],items:[{id:1,item:"example",qty:2,description:"this is an example"}]}, function(err, result){
+								if(err){
+									console.log(err);
+								} else{
+									res.clearCookie("error").redirect(303,"/groups");
+								}
+							});
+						}
+					})
+				}
+			});
+		}
+	});
+})
 router.get('/group', function(req, res){
 	if(req.cookies.username){
 		var MongoClient = mongodb.MongoClient;
@@ -169,10 +236,26 @@ router.get('/group', function(req, res){
 					if(err){
 						console.log(err);
 					} else if(result.length) {
-						if (req.cookies.error){
-							res.render('group',{group:result[0].items, error:req.cookies.error})
+						if(req.cookies.isAdmin){
+							if(req.cookies.username === result[0].owner && error){
+								res.render('group',{group:result[0].items, users:result[0].users,owner:result[0].owner, isAdmin:true, isOwner:true, error:error});
+							} else if(!(req.cookies.username === result[0]) && error){
+								res.render('group',{group:result[0].items, users:result[0].users,owner:result[0].owner, isAdmin:true, error:error});
+							} else if (req.cookies.username === result[0]){
+								res.render('group',{group:result[0].items, users:result[0].users,owner:result[0].owner, isAdmin:true, isOwner:true});
+							} else {
+								res.render('group',{group:result[0].items, users:result[0].users,owner:result[0].owner, isAdmin:true});
+							}
 						} else {
-							res.render('group',{group:result[0].items})
+							if(req.cookies.username === result[0].owner && error){
+								res.render('group',{group:result[0].items,owner:result[0].owner, users:result[0].users, isOwner:true, error:error});
+							} else if(!(req.cookies.username === result[0].owner) && error){
+								res.render('group',{group:result[0].items,owner:result[0].owner, users:result[0].users, error:error});
+							} else if(req.cookies.username === result[0].owner){
+								res.render('group',{group:result[0].items,owner:result[0].owner, users:result[0].users, isOwner:true});
+							} else {
+								res.render('group',{group:result[0].items,owner:result[0].owner, users:result[0].users, error:error});
+							}
 						}
 						db.close();
 					} else {
@@ -187,6 +270,49 @@ router.get('/group', function(req, res){
 		res.redirect(303, 'signing');
 	}
 });
+router.post('/delete', function(req, res){
+	var MongoClient = mongodb.MongoClient;
+	url = 'mongodb://localhost:27017/thing';
+	var groupname = req.cookies.groupname;
+	MongoClient.connect(url, function(req, res){
+		if (err){
+			console.log(err);
+		} else {
+			var collection = db.collection('groups');
+			collection.remove({name:groupname},function(err, result){
+				
+			});
+		}
+	});
+});
+router.post('/transfer', function(req, res){
+	var MongoClient = mongodb.MongoClient;
+	url = 'mongodb://localhost:27017/things';
+	var groupname = req.cookies.groupname;
+	var newOwner = req.body.transfer;
+	MongoClient.connect(url, function(err, db){
+		if (err){
+			console.log(err);
+		} else {
+			var collection = db.collection('groups');
+			collection.find({name:groupname, users:{$elemMatch:{user:newOwner}}}).toArray(function(err, result){
+				if (err){
+					console.log(err);
+				} else if (result.length) {
+					collection.updates({name:groupname}, {$set:{owner:newOwner}}, function(err, records){
+						if (err){
+							console.log(err);
+						} else {
+							res.redirect('/group')
+						}
+					});
+				} else {
+					res.cookie('error', 'user not in inventory', {expire:new Date() + 9999}).redirect(303, 'group');
+				}
+			});
+		}
+	});
+});
 router.post('/addRemove', function(req, res){
 	var MongoClient = mongodb.MongoClient;
 	var url = "mongodb://localhost:27017/things"
@@ -200,6 +326,7 @@ router.post('/addRemove', function(req, res){
 			console.log(err);
 		} else {
 			var collection = db.collection('groups');
+			var collectionb = db.collection('updates')
 			if(method === 'add'){
 				collection.find({name:groupname ,items:{$elemMatch:{item:item, description:description}}}).toArray(function(err, result){
 					if(err){
@@ -215,8 +342,15 @@ router.post('/addRemove', function(req, res){
 							if (err){
 								console.log(err)
 							} else {
-							db.close();
-							res.redirect(303, '/group')
+								var time = (new Date().getTime())/3600000;
+								collectionb.insert({elements:1,affect:"updated",user:req.cookies.username,inventory:groupname,time:time,notify:result[0].users}, function(err, result){
+									if (err){
+										console.log(err)
+									} else{
+										db.close();
+									}
+								})
+								res.redirect(303, '/group')
 							}
 						});
 					} else {
@@ -225,12 +359,26 @@ router.post('/addRemove', function(req, res){
 								console.log(err);
 							}else if(result.length){
 								items = result[0].items
-								collection.update({name:groupname},{$push:{items:{item:item,qty:qty,description:description,id:items.length}}}, function(err, res){
+								collection.update({name:groupname},{$push:{items:{item:item,qty:qty,description:description,id:items.length+1}}}, function(err, result){
 									if(err){
 										console.log(err);
 									} else {
-										db.close();
-										res.clearCookie("error").redirect(303, '/group');
+										var time = Date.now/60000
+										collection.find({name:groupname}).toArray(function(err, result){
+											if(err){
+												console.log(err)
+											} else {
+												var time = (new Date().getTime())/3600000
+												collectionb.insert({elements:qty,affect:"added",user:req.cookies.username,inventory:groupname,time:time,notify:result[0].users}, function(err, result){
+													if (err){
+														console.log(err);
+													} else {
+														db.close();
+													}
+												})
+											}
+										})	
+										res.redirect(303, '/group');
 									}
 								});
 							}
@@ -256,12 +404,20 @@ router.post('/addRemove', function(req, res){
 						} else {
 							items[items.indexOf(newQty)].qty = JSON.stringify(parseInt(items[items.indexOf(newQty)].qty)-parseInt(qty));
 						}
-						collection.update({name:groupname},{$set:{items:items}},function(err, res){
+						collection.update({name:groupname},{$set:{items:items}},function(err, records){
 							if(err){
 								console.log(err);
 							} else {
-								db.close();
-								res.redirect(303, '/group');
+								var time = (new Date().getTime())/3600000;
+								collectionb.insert({elements:qty,affect:"removed",user:req.cookies.username,inventory:groupname,time:time,notify:result[0].users}, function(err, result){
+									if(err){
+										console.log(err);
+									} else {
+										db.close();
+										res.redirect(303, '/group');
+									}
+								});
+								
 							}
 						});
 					} else {
@@ -272,6 +428,45 @@ router.post('/addRemove', function(req, res){
 				console.log('this is a bad method somehow:', method)
 			}
 		}
+	})
+});
+router.get('/admin', function(req,res){
+	if(req.cookies.username && req.cookies.isAdmin){
+		res.render('admin', {isAdmin:true})
+	} else if(req.cookies.username){
+		res.cookie('error', 'you are not an admin :(', {expire: new Date + 9999}).redirect(303,'/home2');
+	} else {
+		res.redirect(303, '/signin');
+	}
+});
+router.post('/invite', function(req, res){
+	var username = req.body.usr;
+	var MongoClient = mongodb.MongoClient;
+	var groupname = req.cookies.groupname
+	var url = "mongodb://localhost:27017/things"
+	MongoClient.connect(url, function(err, db){
+		var collection = db.collection("groups");
+		collection.find({name:groupname}).toArray(function(err, result){
+			if(err){
+				console.log(err);
+			} else if(result.length) {
+				var users = result[0].users
+				var isIn = users.find(function(element){
+					return element.user = username;
+				})
+				if(isIn === -1){
+					collection.update({name:groupname},{$push:{users:{user:username}}},function(err, result){
+						if (err){
+							console.log(err);
+						} else {
+							res.redirect(303, '/group');
+						}
+					})
+				}
+			} else {
+				res.cookie("error","user "+username+" does not exist").redirect(303,'/group')
+			}
+		})
 	})
 })
 router.get('/logout', function(req,res){
@@ -352,7 +547,13 @@ router.get('/about', function(req, res){
 	res.render('about', {title:"about"});
 });
 router.get('/about2', function(req, res){
-	res.render('about2', {title:"about"});
+	if(req.cookies.username && req.cookies.isAdmin){
+		res.render('about2', {title:"about", isAdmin:true});
+	} else if(req.cookies.username){
+		res.render("about2", {title:"about"});
+	} else {
+		res.redirect(303, '/signin');
+	}
 });
 router.get('/thelist', function(req, res){
 var MongoClient = mongodb.MongoClient;
