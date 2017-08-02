@@ -2,8 +2,11 @@ extends layout
 block content
 	head
 		include ./head.jade
-		h3= title
-	include ./bsnavbar2.jade
+		title= title
+	unless isAdmin
+		include ./bsnavbar2.jade
+	if isAdmin
+		include ./bsnavbar3.jade
 	br
 	br
 	br
@@ -13,12 +16,18 @@ block content
 			a(href="#", class="close", data-dismiss="alert", aria-label="close") &times;
 			strong= error
 	if groups
+		h2	 Inventories
 		ul(type='none')
 			- for(i = 0;i < groups.length; i++){
 				li
 					form(action="/groupSel", method="POST")
 						button.btn.btn-primary(type="submit", id="groupsub", value ="#{groups[i].name}", name="groupsub")
 							| #{groups[i].name}&nbsp;
-							span.badge #{groups[i].updates}
 				br
 			- }
+	h2(align="center") make an inventory
+	form(action="/makeGroup", method="POST")
+		.form-group
+			label(for="name") Inventory name:
+			input#name.form-control(type="text",name="name", placeholder="Enter name:")
+		button.btn.btn-default(type="submit") Create
