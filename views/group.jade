@@ -1,8 +1,5 @@
-extends layout
+extends layout1
 block content
-	head
-		include ./head.jade
-		h3= title
 	unless isAdmin
 		include ./bsnavbar2.jade
 	if isAdmin
@@ -15,43 +12,48 @@ block content
 		div(class="alert alert-warning")
 			a(href="#", class="close", data-dismiss="alert", aria-label="close") &times;
 			strong= error
-	if group
-		table(border='1', align="center", style="padding:10px")
-			tr
-				td id
-				td item
-				td qty
-				td description
-			- for(var i = 0; i< group.length; i++){
+	div(style="color:white;")
+		if group
+			table(padding="10", border='1', align="center", style="border-color:white;")
 				tr
-					td= group[i].id
-					td= group[i].item
-					td= group[i].qty
-					td= group[i].description
-			- }
-		h2(align="center") add/remove items
-		form(action="/addRemove", method="POST", align="center")
-			.form-group
-				label(for="method") add or remove:&nbsp;
-					select#method(name="method")
-						option(value="add") add
-						option(value="remove") remove
-			.form-group
-				label(for="item") item:
-				input#item.form-control(type="text", placeholder="Enter item" name="item")
-			.form-group
-				label(for="qty") amount:
-				input#qty.form-control(type="number", placeholder="Enter amount" name="qty")
-			.form-group
-				label(for="description") description:
-				input#description.form-control(type="text", placeholder="Enter description", name="description")
-			button.btn.btn-primary(type="submit") modify
+					td id
+					td item
+					td qty
+					td description
+				- for(var i = 0; i< group.length; i++){
+					tr
+						td= group[i].id
+						td= group[i].item
+						td= group[i].qty
+						td= group[i].description
+				- }
+			h2(align="center") add/remove items
+			form(action="/addRemove", method="POST", align="center")
+				.form-group
+					label(for="method") add or remove:&nbsp;
+						select#method(name="method", style="color:black")
+							option(value="add") add
+							option(value="remove") remove
+				.form-group
+					label(for="item") item:
+					input#item.form-control(type="text", placeholder="Enter item" name="item")
+				.form-group
+					label(for="qty") amount:
+					input#qty.form-control(type="number", placeholder="Enter amount" name="qty")
+				.form-group
+					label(for="description") description:
+					input#description.form-control(type="text", placeholder="Enter description", name="description")
+				button.btn.btn-primary(type="submit") modify
+			br
+			h2 users
+			ul
+				- for(var i = 0;i < users.length;i++){
+					li= users[i].user
+				- }
+			br
 		br
-		h2 users
-		ul
-			- for(var i = 0;i < users.length;i++){
-				li= users[i].user
-			- }
+		br
+		br
 		br
 		if isOwner
 			h2(align="center") invite user
@@ -60,6 +62,8 @@ block content
 					label(for='username') username:
 					input#usr.form-control(type="text", placeholder="Enter username", name="usr")
 				button.btn.btn-primary(type="submit") invite
+			br
+			br
 			br
 			h1(align="center" style="color:red;") THE DANGER ZONE!
 			br
