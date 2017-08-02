@@ -1,7 +1,6 @@
-extends layout
+extends layout1
 block content
 	head
-		include ./head.jade
 		title= title
 	unless isAdmin
 		include ./bsnavbar2.jade
@@ -15,19 +14,20 @@ block content
 		div(class="alert alert-warning")
 			a(href="#", class="close", data-dismiss="alert", aria-label="close") &times;
 			strong= error
-	if groups
-		h2	 Inventories
-		ul(type='none')
-			- for(i = 0;i < groups.length; i++){
-				li
-					form(action="/groupSel", method="POST")
-						button.btn.btn-primary(type="submit", id="groupsub", value ="#{groups[i].name}", name="groupsub")
-							| #{groups[i].name}&nbsp;
-				br
-			- }
-	h2(align="center") make an inventory
-	form(action="/makeGroup", method="POST")
-		.form-group
-			label(for="name") Inventory name:
-			input#name.form-control(type="text",name="name", placeholder="Enter name:")
-		button.btn.btn-default(type="submit") Create
+	div(style="color:white")
+		if groups
+			h2 Inventories
+			ul(type='none')
+				- for(i = 0;i < groups.length; i++){
+					li
+						form(action="/groupSel", method="POST")
+							button.btn.btn-primary(type="submit", id="groupsub", value ="#{groups[i].name}", name="groupsub")
+								| #{groups[i].name}&nbsp;
+					br
+				- }
+		h2(align="center") make an inventory
+		form(action="/makeGroup", method="POST")
+			.form-group
+				label(for="name") Inventory name:
+				input#name.form-control(type="text",name="name", placeholder="Enter name:")
+			button.btn.btn-default(type="submit") Create
