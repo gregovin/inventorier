@@ -3,7 +3,10 @@ block content
 	head
 		include ./head.jade
 		h3= title
-	include ./bsnavbar2.jade
+	unless isAdmin
+		include ./bsnavbar2.jade
+	if isAdmin
+		include ./bsnavbar3.jade
 	br
 	br
 	br
@@ -27,19 +30,47 @@ block content
 					td= group[i].description
 			- }
 		h2(align="center") add/remove items
-		form(action="/addRemove", method="POST")
+		form(action="/addRemove", method="POST", align="center")
 			.form-group
-				label(for="method") add or remove&nbsp;
+				label(for="method") add or remove:&nbsp;
 					select#method(name="method")
 						option(value="add") add
 						option(value="remove") remove
 			.form-group
-				label(for="item") item
+				label(for="item") item:
 				input#item.form-control(type="text", placeholder="Enter item" name="item")
 			.form-group
-				label(for="qty") amount
+				label(for="qty") amount:
 				input#qty.form-control(type="number", placeholder="Enter amount" name="qty")
 			.form-group
-				label(for="description") description
+				label(for="description") description:
 				input#description.form-control(type="text", placeholder="Enter description", name="description")
 			button.btn.btn-primary(type="submit") modify
+		br
+		h2 users
+		ul
+			- for(var i = 0;i < users.length;i++){
+				li= users[i].user
+			- }
+		br
+		if isOwner
+			h2(align="center") invite user
+			form(action="/invite", method="POST", align='center')
+				.form-group
+					label(for='username') username:
+					input#usr.form-control(type="text", placeholder="Enter username", name="usr")
+				button.btn.btn-primary(type="submit") invite
+			br
+			h1(align="center" style="color:red;") THE DANGER ZONE!
+			br
+			div(style="color:red;", align="center")
+				h2 Transfer ownership
+				form(action='/transfer', method='POST')
+					.form-group
+						label(for='transfer') transfer ownership
+						input#transfer.form-control(type="text", placeholder="Transfer to", name="transfer")
+					button.btn.btn-primary(type="submit") transfer
+				br
+				h2 Delete inventory:
+				form(action="/delete", method="POST")
+					button.btn.btn-primary(type="submit") delete
