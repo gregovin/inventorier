@@ -3,11 +3,17 @@ block content
 	head
 		include ./head.jade
 		h3= title
-	include ./bsnavbar2.jade
+	unless isAdmin
+		include ./bsnavbar2.jade
+	if isAdmin
+		include ./bsnavbar3.jade
 	br
 	br
 	br
-	br
+	if error
+		div(class="alert alert-warning")
+			a(href="#", class="close", data-dismiss="alert", aria-label="close") &times;
+			strong= error
 	#userstuff(align='center')
 		h2= username
 		img(src='images/profiles/#{username}.jpeg')
@@ -16,5 +22,5 @@ block content
 	if updates
 		ul(type='none')
 			- for(i=0; i<updates.length;i ++){
-				li #{updates[i].elements} items were #{updates[i].affect} by #{updates[i].user} in #{updates[i].inventory} #{updates[i].time} hrs ago because #{updates[i].comment}
+				li #{updates[i].elements} items were #{updates[i].affect} by #{updates[i].user} in #{updates[i].inventory} #{updates[i].time} hrs ago
 			- }
