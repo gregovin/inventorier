@@ -3,7 +3,10 @@ block content
 	head
 		include ./head.jade
 		h3= title
-	include ./bsnavbar2.jade
+	unless isAdmin
+		include ./bsnavbar2.jade
+	if isAdmin
+		include ./bsnavbar3.jade
 	br
 	br
 	br
