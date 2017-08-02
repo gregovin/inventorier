@@ -1,0 +1,26 @@
+extends layout1
+block content
+	head
+		title= title
+	include ./bsnavbar3.jade
+	br
+	br
+	br
+	br
+	if error
+		div(class="alert alert-warning")
+			a(href="#", class="close", data-dismiss="alert", aria-label="close") &times;
+			strong= error
+	div(align="center", style="color:white")
+		h3 current admins
+		ul(type="none")
+			- for(var i = 0; i < admins.length; i ++){
+				li= admins[i].username
+			- }
+		br
+		h3 Add admin
+		form(action='/addAdmin', method="POST")
+			.form-group
+				label(for=username) username:
+				input#username.form-control(name="username", type="text", placeholder="username")
+			button.btn.btn-primary(type="submit") add
