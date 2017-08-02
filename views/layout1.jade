@@ -1,0 +1,13 @@
+doctype html
+html
+	head
+		include ./head.jade
+		title= title
+		link(rel='stylesheet', href='/stylesheets/style.css')
+		style.
+			th, td {
+			padding: 10px;
+			font-size: 20px;
+			}
+	body(background="images/background4.jpeg" style="background-repeat:repeat-y;background-size:100%;")
+		block content
