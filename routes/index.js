@@ -13,6 +13,7 @@ var parseurl = require('parseurl');
 router.use(require('body-parser').urlencoded({extended:true}));
 router.use(require('cookie-parser')(credentials.cookieSecret));
 router.use(express.static(__dirname + '/public'))
+var sanitize = require('mongo-sanitize')
 /* Pages loc
 home : 89
 sign in : 786
@@ -107,11 +108,11 @@ router.post('/adduser', function(req, res){
 		} else {
 			console.log('Connected to Server');
 			var collection = db.collection('users');
-			var querry = {username:req.body.usr};
+			var querry = {username:sanitize(req.body.usr)};
 			var nameTaken = false;
 			if(req.body.psw === req.body.confirmPsw){ // Get the documents collection
-				var user1 = {username: req.body.usr, password: hash(req.body.psw), // Get the student data    	city: req.body.city, state: req.body.state, sex: req.body.sex,
-				email: req.body.email, profileImg:'/images/profiles/default.jpeg', admin:false, bannedTil:null};
+				var user1 = {username: sanitize(req.body.usr), password: hash(req.body.psw), // Get the student data    	city: req.body.city, state: req.body.state, sex: req.body.sex,
+				email: sanitize(req.body.email), profileImg:'/images/profiles/default.png', admin:false, bannedTil:null};
 				collection.find(querry).toArray(function(err, result){
 						if(err){
 							console.log(err);
@@ -223,7 +224,7 @@ router.get('/home2', function(req, res){
 });
 router.post('/changePhoto', function(req,res){
 	var username = req.cookies.username
-	var img = req.body.link;
+	var img = sanitize(req.body.link);
 	var MongoClient = mongodb.MongoClient;
 	var url = 'mongodb://localhost:27017/things';
 	MongoClient.connect(url, function(err, db){
@@ -242,7 +243,7 @@ router.post('/changePhoto', function(req,res){
 	})
 })
 router.post('/findUser', function(req, res){
-	var username = req.body.usr
+	var username = sanitize(req.body.usr)
 	var MongoClient = mongodb.MongoClient;
 	var url = 'mongodb://localhost:27017/things';
 	MongoClient.connect(url, function(err, db){
@@ -310,7 +311,7 @@ router.post('/groupSel', function(req, res){
 	if(req.cookies.username){
 		var MongoClient = mongodb.MongoClient;
 		url = 'mongodb://localhost:27017/things';
-		var groupname = req.body.groupsub
+		var groupname = sanitize(req.body.groupsub)
 		console.log(groupname);
 		res.cookie('groupname', groupname, {expire:new Date() + 9999}).redirect(303, '/group')
 	} else{
@@ -318,7 +319,7 @@ router.post('/groupSel', function(req, res){
 	}
 });
 router.post('/makeGroup', function(req, res){
-	var groupName = req.body.name;
+	var groupName = sanitize(req.body.name);
 	var MongoClient = mongodb.MongoClient;
 	url = 'mongodb://localhost:27017/things';
 	MongoClient.connect(url, function(err, db){
@@ -326,7 +327,7 @@ router.post('/makeGroup', function(req, res){
 			console.log(err);
 		}else{
 			var collection = db.collection('groups');
-			collection.find({name:groupName},function(err, result){
+			collection.find({name:groupName}).toArray(function(err, result){
 				if(err){
 					console.log(err);
 				}else if(result.length){
@@ -426,7 +427,7 @@ router.post('/transfer', function(req, res){
 	var MongoClient = mongodb.MongoClient;
 	url = 'mongodb://localhost:27017/things';
 	var groupname = req.cookies.groupname;
-	var newOwner = req.body.transfer;
+	var newOwner = sanitize(req.body.transfer);
 	MongoClient.connect(url, function(err, db){
 		if (err){
 			console.log(err);
@@ -453,11 +454,11 @@ router.post('/transfer', function(req, res){
 router.post('/addRemove', function(req, res){
 	var MongoClient = mongodb.MongoClient;
 	var url = "mongodb://localhost:27017/things"
-	var method = req.body.method;
-	var item = req.body.item;
+	var method = sanitize(req.body.method);
+	var item = sanitize(req.body.item);
 	var groupname = req.cookies.groupname;
-	var description = req.body.description;
-	var qty = req.body.qty;
+	var description = sanitize(req.body.description);
+	var qty = sanitize(req.body.qty);
 	MongoClient.connect(url, function(err, db){
 		if(err){
 			console.log(err);
@@ -533,8 +534,8 @@ router.post('/addRemove', function(req, res){
 						items = result[0].items
 						if (parseInt(items[items.indexOf(newQty)].qty)-parseInt(qty) <= 0){
 							var loc = items.indexOf(newQty);
-							items.splice(items.indexOf(newQty));
-							for(var i = loc + 1;i<items.length;i++){
+							items.splice(loc, 1);
+							for(var i = loc;i<items.length;i++){
 								items[i].id --;
 							}
 						} else {
@@ -568,7 +569,7 @@ router.post('/addRemove', function(req, res){
 });
 
 router.post('/invite', function(req, res){
-	var username = req.body.usr;
+	var username = sanitize(req.body.usr);
 	var MongoClient = mongodb.MongoClient;
 	var groupname = req.cookies.groupname
 	var url = "mongodb://localhost:27017/things"
@@ -673,7 +674,7 @@ router.get('/admin', function(req,res){
 	}
 });
 router.post('/addAdmin', function(req,res){
-	var username = req.body.username;
+	var username = sanitize(req.body.username);
 	var url = "mongodb://localhost:27017/things";
 	var MongoClient = mongodb.MongoClient;
 	MongoClient.connect(url, function(err, db){
@@ -702,8 +703,8 @@ router.post('/addAdmin', function(req,res){
 	})
 })
 router.post('/ban', function(req, res){
-	var username = req.body.user;
-	var time = req.body.time;
+	var username = sanitize(req.body.user);
+	var time = sanitize(req.body.time);
 	var url = "mongodb://localhost:27017/things"
 	var MongoClient = mongodb.MongoClient;
 	MongoClient.connect(url, function(err, db){
@@ -740,7 +741,7 @@ router.post('/ban', function(req, res){
 	});
 });
 router.post('/unban', function(req, res){
-	var username = req.body.user
+	var username = sanitize(req.body.user)
 	var url = "mongodb://localhost:27017/things"
 	var MongoClient = mongodb.MongoClient;
 	MongoClient.connect(url, function(err, db){
