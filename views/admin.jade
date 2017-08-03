@@ -24,3 +24,40 @@ block content
 				label(for=username) username:
 				input#username.form-control(name="username", type="text", placeholder="username")
 			button.btn.btn-primary(type="submit") add
+		br
+		h3 clear updates from more than 24 hrs ago
+		form(action="/clear", method="POST")
+			button.btn.btn-default(type="subit") clear
+		br
+		h3 Ban
+		form(action="/ban", method="POST")
+			.form-group
+				label(for="time")
+				select#time(name="time", style="color:black")
+						option(value='1') 10 mins 
+						option(value='6') 1 hr
+						option(value='48') 8 hrs
+						option(value='144') 24 hrs
+						option(value='1008') 1 week
+						option(value='4032') 4 weeks
+						option(value='52560') 1 year
+						option(value='262800') 5 years
+						option(value='525600') 10 years
+						option(value='inf') to the end of time
+			.form-group
+				label(for='user')
+				input#user.form-control(type="text", name="user", placeholder="username")
+			button.btn.btn-primary(type="submit") ban
+		br
+		h3 banned users
+		ul(type=none)
+			- for(var i = 0; i < banned.length; i++){
+				li= banned[i].username
+			- }
+		br
+		h3 unban
+		form(action ='/unban', method="POST")
+			.form-group
+				label(for="username")
+				input#user.form-control(type="text", name="user", placeholder="username")
+			button.btn.btn-primary(type="submit") unban
