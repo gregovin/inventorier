@@ -75,7 +75,7 @@ var hash = function(plaintext){
 
 /* GET home page. */
 router.get('/', function(req, res, next) {
-  res.render('home', { title: 'home' });
+ 	res.render('home', { title: 'home' });
 });
 router.get('/createAcount', function(req, res){
 	if (!req.cookies.error){
@@ -107,22 +107,45 @@ router.get('/home2', function(req, res){
 								console.log(err);
 							}else{
 								if(user[0].admin){
+									console.log("i is admin")
 									db.close();
-									if (error && !(req.cookies.isAdmin)){
-										res.cookie('isAdmin',true, {expire:new Date() + 9999}).render('home2',{updates:result, username:req.cookies.username, isAdmin:true, error:error});
-									} else if (!(req.cookies.isAdmin) && !(error)){
-										res.cookie('isAdmin',true, {expire:new Date() + 9999}).render('home2',{updates:result, username:req.cookies.username, isAdmin:true});
-									} else if (error){
-										res.render('home2',{updates:result, username:req.cookies.username, isAdmin:true, error:error});
+									if(req.cookies.foundUser){
+										if (req.cookies.error && !(req.cookies.isAdmin)){
+											console.log('cookie made')
+											res.cookie('isAdmin',true, {expire:new Date() + 9999}).render('home2',{updates:result, username:req.cookies.username, isAdmin:true, error:req.cookies.error, img:user[0].profileImg, foundUser:req.cookies.foundUser});
+										} else if (!(req.cookies.isAdmin) && !(req.cookies.error)){
+											console.log('cookie made')
+											res.cookie('isAdmin',true, {expire:new Date() + 9999}).render('home2',{updates:result, username:req.cookies.username, isAdmin:true, img:user[0].profileImg, foundUser:req.cookies.foundUser});
+										} else if (req.cookies.error){
+											res.render('home2',{updates:result, username:req.cookies.username, isAdmin:true, error:req.cookies.error, img:user[0].profileImg, foundUser:req.cookies.foundUser});
+										} else {
+											res.render('home2',{updates:result, username:req.cookies.username, isAdmin:true, img:user[0].profileImg, foundUser:req.cookies.foundUser});
+										}
 									} else {
-										res.render('home2',{updates:result, username:req.cookies.username, isAdmin:true});
+										if (req.cookies.error && !(req.cookies.isAdmin)){
+											res.cookie('isAdmin',true, {expire:new Date() + 9999}).render('home2',{updates:result, username:req.cookies.username, isAdmin:true, error:req.cookies.error, img:user[0].profileImg});
+										} else if (!(req.cookies.isAdmin) && !(req.cookies.error)){
+											res.cookie('isAdmin',true, {expire:new Date() + 9999}).render('home2',{updates:result, username:req.cookies.username, isAdmin:true, img:user[0].profileImg});
+										} else if (req.cookies.error){
+											res.render('home2',{updates:result, username:req.cookies.username, isAdmin:true, error:req.cookies.error, img:user[0].profileImg});
+										} else {
+											res.render('home2',{updates:result, username:req.cookies.username, isAdmin:true, img:user[0].profileImg});
+										}
 									}
 								} else {
 									db.close();
-									if(error){
-										res.render('home2',{updates:result,username:req.cookies.username, error:error});
+									if(req.cookies.foundUser){
+										if(req.cookies.error){
+											res.clearCookie("isAdmin").render('home2',{updates:result,username:req.cookies.username, error:req.cookies.error, img:user[0].profileImg, foundUser:req.cookies.foundUser});
+										} else {
+											res.clearCookie("isAdmin").render('home2',{updates:result,username:req.cookies.username, img:user[0].profileImg, foundUser:req.cookies.foundUser});
+										}
 									} else {
-										res.render('home2',{updates:result,username:req.cookies.username});
+										if(req.cookies.error){
+											res.clearCookie("isAdmin").render('home2',{updates:result,username:req.cookies.username, error:req.cookies.error, img:user[0].profileImg});
+										} else {
+											res.clearCookie("isAdmin").render('home2',{updates:result,username:req.cookies.username, img:user[0].profileImg});
+										}
 									}
 								}
 
@@ -136,6 +159,49 @@ router.get('/home2', function(req, res){
 		res.clearCookie('error').redirect(303, 'signin')
 	}
 });
+router.post('/changePhoto', function(req,res){
+	var username = req.cookies.username
+	var img = req.body.link;
+	var MongoClient = mongodb.MongoClient;
+	var url = 'mongodb://localhost:27017/things';
+	MongoClient.connect(url, function(err, db){
+		if(err){
+			console.log(err);
+		} else {
+			var collection = db.collection("users");
+			collection.update({username:username},{$set:{profileImg:img}}, function(err, records){
+				if(err){
+					console.log(err);
+				} else {
+					res.redirect('/home2');
+				}
+			})
+		}
+	})
+})
+router.post('/findUser', function(req, res){
+	var username = req.body.usr
+	var MongoClient = mongodb.MongoClient;
+	var url = 'mongodb://localhost:27017/things';
+	MongoClient.connect(url, function(err, db){
+		if(err){
+			console.log(err);
+		} else {
+			var collection = db.collection("users");
+			collection.find({username:username}).toArray(function(err, result){
+				if(err){
+					console.log(err);
+				} else if (result.length) {
+					db.close();
+					res.cookie('foundUser', {username:username, img:result[0].profileImg}, {expire: new Date + 9999}).redirect(303, '/home2');
+				} else {
+					db.close()
+					res.cookie('foundUser', {username:"user does not exist", img:'images/profiles/default.jpeg'}).redirect(303, '/home2')
+				}
+			})
+		}
+	})
+})
 router.get('/groups', function(req, res){
 	if(req.cookies.username){
 		var MongoClient = mongodb.MongoClient;
@@ -192,7 +258,6 @@ router.post('/makeGroup', function(req, res){
 	var groupName = req.body.name;
 	var MongoClient = mongodb.MongoClient;
 	url = 'mongodb://localhost:27017/things';
-	console.log('loading');
 	MongoClient.connect(url, function(err, db){
 		if(err){
 			console.log(err);
@@ -237,24 +302,25 @@ router.get('/group', function(req, res){
 						console.log(err);
 					} else if(result.length) {
 						if(req.cookies.isAdmin){
-							if(req.cookies.username === result[0].owner && error){
-								res.render('group',{group:result[0].items, users:result[0].users,owner:result[0].owner, isAdmin:true, isOwner:true, error:error});
-							} else if(!(req.cookies.username === result[0]) && error){
-								res.render('group',{group:result[0].items, users:result[0].users,owner:result[0].owner, isAdmin:true, error:error});
-							} else if (req.cookies.username === result[0]){
+							console.log(req.cookies.username, result[0].owner)
+							if(req.cookies.username === result[0].owner && req.cookies.error){
+								res.render('group',{group:result[0].items, users:result[0].users,owner:result[0].owner, isAdmin:true, isOwner:true, error:req.cookies.error});
+							} else if(req.cookies.username !== result[0].owner && req.cookies.error){
+								res.render('group',{group:result[0].items, users:result[0].users,owner:result[0].owner, isAdmin:true, error:req.cookies.error});
+							} else if (req.cookies.username === result[0].owner){
 								res.render('group',{group:result[0].items, users:result[0].users,owner:result[0].owner, isAdmin:true, isOwner:true});
 							} else {
 								res.render('group',{group:result[0].items, users:result[0].users,owner:result[0].owner, isAdmin:true});
 							}
 						} else {
-							if(req.cookies.username === result[0].owner && error){
+							if(req.cookies.username === result[0].owner && req.cookies.error){
 								res.render('group',{group:result[0].items,owner:result[0].owner, users:result[0].users, isOwner:true, error:error});
-							} else if(!(req.cookies.username === result[0].owner) && error){
-								res.render('group',{group:result[0].items,owner:result[0].owner, users:result[0].users, error:error});
+							} else if(req.cookies.username !== result[0].owner && req.cookies.error){
+								res.render('group',{group:result[0].items,owner:result[0].owner, users:result[0].users, error:req.cookies.error});
 							} else if(req.cookies.username === result[0].owner){
 								res.render('group',{group:result[0].items,owner:result[0].owner, users:result[0].users, isOwner:true});
 							} else {
-								res.render('group',{group:result[0].items,owner:result[0].owner, users:result[0].users, error:error});
+								res.render('group',{group:result[0].items,owner:result[0].owner, users:result[0].users, error:req.cookies.error});
 							}
 						}
 						db.close();
@@ -272,15 +338,22 @@ router.get('/group', function(req, res){
 });
 router.post('/delete', function(req, res){
 	var MongoClient = mongodb.MongoClient;
-	url = 'mongodb://localhost:27017/thing';
+	url = 'mongodb://localhost:27017/things';
 	var groupname = req.cookies.groupname;
-	MongoClient.connect(url, function(req, res){
+	MongoClient.connect(url, function(err, db){
 		if (err){
 			console.log(err);
 		} else {
 			var collection = db.collection('groups');
+			console.log(groupname)
 			collection.remove({name:groupname},function(err, result){
-				
+				if(err){
+					console.log(err);
+				} else {
+					console.log("success:", result.result);
+					db.close();
+					res.redirect(303, '/groups');
+				}
 			});
 		}
 	});
@@ -299,7 +372,7 @@ router.post('/transfer', function(req, res){
 				if (err){
 					console.log(err);
 				} else if (result.length) {
-					collection.updates({name:groupname}, {$set:{owner:newOwner}}, function(err, records){
+					collection.update({name:groupname}, {$set:{owner:newOwner}}, function(err, records){
 						if (err){
 							console.log(err);
 						} else {
@@ -336,7 +409,6 @@ router.post('/addRemove', function(req, res){
 							return element.item === item && element.description === description;
 						});
 						items = result[0].items
-						console.log(parseInt(items[items.indexOf(newQty)]), parseInt(qty))
 						items[items.indexOf(newQty)].qty = JSON.stringify(parseInt(items[items.indexOf(newQty)].qty)+parseInt(qty)); 	
 						collection.update({name:groupname},{$set:{items:items}},function(err, records){
 							if (err){
@@ -363,7 +435,7 @@ router.post('/addRemove', function(req, res){
 									if(err){
 										console.log(err);
 									} else {
-										var time = Date.now/60000
+										var time = Date.now/3600000
 										collection.find({name:groupname}).toArray(function(err, result){
 											if(err){
 												console.log(err)
@@ -430,15 +502,7 @@ router.post('/addRemove', function(req, res){
 		}
 	})
 });
-router.get('/admin', function(req,res){
-	if(req.cookies.username && req.cookies.isAdmin){
-		res.render('admin', {isAdmin:true})
-	} else if(req.cookies.username){
-		res.cookie('error', 'you are not an admin :(', {expire: new Date + 9999}).redirect(303,'/home2');
-	} else {
-		res.redirect(303, '/signin');
-	}
-});
+
 router.post('/invite', function(req, res){
 	var username = req.body.usr;
 	var MongoClient = mongodb.MongoClient;
@@ -450,23 +514,207 @@ router.post('/invite', function(req, res){
 			if(err){
 				console.log(err);
 			} else if(result.length) {
-				var users = result[0].users
-				var isIn = users.find(function(element){
-					return element.user = username;
+				collection.update({name:groupname},{$push:{users:{user:username}}},function(err, result){
+					if (err){
+						console.log(err);
+					} else {
+						res.redirect(303, '/group');
+					}
 				})
-				if(isIn === -1){
-					collection.update({name:groupname},{$push:{users:{user:username}}},function(err, result){
-						if (err){
-							console.log(err);
-						} else {
-							res.redirect(303, '/group');
-						}
-					})
-				}
 			} else {
 				res.cookie("error","user "+username+" does not exist").redirect(303,'/group')
 			}
 		})
+	})
+})
+router.get('/contactUs', function(req, res){
+	var MongoClient = mongodb.MongoClient;
+	var url = "mongodb://localhost:27017/things";
+	MongoClient.connect(url ,function(err, db){
+		if(err){
+			console.log(err);
+		} else {
+			var collection = db.collection('users')
+			collection.find({admin:true}).toArray(function(err, result){
+				if(err){
+					console.log(err);
+				} else {
+					db.close();
+					res.render('contactUs',{admins:result});
+				}
+			})
+		}
+	})
+})
+router.get('/contactUs2', function(req, res){
+	if (req.cookies.username){	
+		var MongoClient = mongodb.MongoClient;
+		var url = "mongodb://localhost:27017/things";
+		MongoClient.connect(url ,function(err, db){
+			if(err){
+				console.log(err);
+			} else {
+				var collection = db.collection('users')
+				collection.find({admin:true}).toArray(function(err, result){
+					if(err){
+						console.log(err);
+					} else {
+						db.close();
+						if(req.cookies.isAdmin){
+							res.render('contactUs2',{admins:result, isAdmin:true});
+						} else {
+							res.render('contactUs2',{admins:result});
+						}
+					}
+				})
+			}
+		})
+	} else {
+		res.redirect(303, '/signin')
+	}
+})
+router.get('/admin', function(req,res){
+	if(req.cookies.username && req.cookies.isAdmin){
+		var MongoClient = mongodb.MongoClient;
+		var url = "mongodb://localhost:27017/things"
+		MongoClient.connect(url, function(err, db){
+			if(err){
+				console.log(err);
+			} else {
+				var collection = db.collection("users")
+				collection.find({admin:true}).toArray(function(err, result){
+					if(err){
+						console.log(err);
+					} else {
+						collection.find({bannedTil:{$gte: new Date().getTime}}).toArray(function(err, banned){
+							if(err){
+								console.log(err);
+							} else {
+								db.close()
+								res.render('admin', {isAdmin:true, admins:result, banned:banned})
+							}
+						})
+						
+					}
+				})
+			}
+		})
+	} else if(req.cookies.username){
+		res.cookie('error', 'you are not an admin :(', {expire: new Date + 9999}).redirect(303,'/home2');
+	} else {
+		res.redirect(303, '/signin');
+	}
+});
+router.post('/addAdmin', function(req,res){
+	var username = req.body.username;
+	var url = "mongodb://localhost:27017/things";
+	var MongoClient = mongodb.MongoClient;
+	MongoClient.connect(url, function(err, db){
+		if(err){
+			console.log(err);
+		} else{
+			var collection = db.collection("users");
+			collection.find({username:username}).toArray(function(err, result){
+				if(err){
+					console.log(err)
+				} else if(result.length) {
+					collection.update({username:username}, {$set:{admin:true}}, function(err, records){
+						if(err){
+							console.log(err);
+						} else {
+							db.close()
+							res.clearCookie('error').redirect(303, '/admin');
+						}
+					})
+				} else {
+					db.close();
+					res.cookie("error", "user " + username + " doesn't exist").redirect(303, '/admin');
+				}
+			})
+		}
+	})
+})
+router.post('/ban', function(req, res){
+	var username = req.body.username;
+	var time = req.body.time;
+	var url = "mongodb://localhost:27017/things"
+	var MongoClient = mongodb.MongoClient;
+	MongoClient(url, function(err, db){
+		if(err){
+			console.log(err)
+		} else {
+			var collection = collection("users")
+			collection.find({username:username, isAdmin:false}).toArray(function(err, result){
+				if(err){
+					console.log(err);
+				} else if (result.length){
+					if(time === "inf"){
+						var banTime = 1/0;
+					} else {
+						var banTime = new Date().getTime + parseInt(time) * 6000;
+					}
+					collection.update({username:username},{$set:{bannedTil:banTime}}, function(err, records){
+						if(err){
+							console.log(err);
+						} else {
+							db.close();
+							res.clearCookie('error').redirect(303,'/admin');
+						}
+					})
+				} else {
+					db.close();
+					res.cookie('error', 'user does not exist or is admin', {expire: new Date() + 9999}).redirect(303,'/admin')
+				}
+			});
+		}
+	});
+});
+router.post('/unban', function(req, res){
+	var username = req.body.user
+	var url = "mongodb://localhost:27017/things"
+	var MongoClient = mongodb.MongoClient;
+	MongoClient.connect(url, function(err, db){
+		if(err){
+			console.log(err);
+		} else {
+			var collection = db.collection('users');
+			collection.find({username:username,bannedTil:{$gte: new Date().getTime}}).toArray(function(err, result){
+				if(err){
+					console.log(err);
+				} else if(result.length) {
+					collection.update({username:username}, {$set:{bannedTil: new Date().getTime - 100}}, function(err, records){
+						if(err){
+							console.log(err)
+						} else {
+							db.close();
+							res.clearCookie('error').redirect(303, '/admin');
+						}
+					})
+				} else {
+					db.close()
+					res.cookie('error', 'user ' + username + ' not curently banned or does not exist', {expire: new Date() + 9999}).redirect(303, '/admin')
+				}
+			})
+		}
+	})
+})
+router.post('/clear', function(req, res){
+	var url = "mongodb://localhost:27017/things"
+	var MongoClient = mongodb.MongoClient;
+	MongoClient.connect(url, function(err, db){
+		if(err){
+			console.log(err);
+		} else {
+			var collection = db.collection('updates');
+			collection.deleteMany({time:{$lte: new Date.getTime - 86400000}}, function(err, obj){
+				if(err){
+					console.log(err);
+				} else {
+					db.close()
+					res.redirect('/admin');	
+				}
+			})
+		}
 	})
 })
 router.get('/logout', function(req,res){
@@ -481,12 +729,11 @@ router.post('/adduser', function(req, res){
 		} else {
 			console.log('Connected to Server');
 			var collection = db.collection('users');
-			console.log(req.body.usr);
 			var querry = {username:req.body.usr};
 			var nameTaken = false;
 			if(req.body.psw === req.body.confirmPsw){ // Get the documents collection
 				var user1 = {username: req.body.usr, password: hash(req.body.psw), // Get the student data    	city: req.body.city, state: req.body.state, sex: req.body.sex,
-				email: req.body.email};
+				email: req.body.email, profileImg:'/images/profiles/default.jpeg', admin:false, bannedTil:null};
 				collection.find(querry).toArray(function(err, result){
 						if(err){
 							console.log(err);
@@ -535,7 +782,11 @@ router.post('/proccesSignIn', function(req,res){
 				if(err){
 					console.log(err);
 				} else if(result.length){
-					res.clearCookie('error').cookie("username", result[0].username, {expire:new Date()+9999}).redirect(303, 'home2');
+					if(result[0].bannedTil === null || result.bannedTil > new Date().getTime){
+						res.clearCookie('error').clearCookie('isAdmin').cookie("username", result[0].username, {expire:new Date()+9999}).redirect(303, 'home2');
+					} else {
+						res.cookie('error', "you are banned", {expire:new Date() + 9999}).redirect(303, 'signin');
+					}
 				} else {
 					res.cookie("error", "username and/or password is incorect", {expire:new Date() + 9999}).redirect(303, 'signin');
 				}
