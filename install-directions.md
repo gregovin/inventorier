@@ -5,6 +5,7 @@ brew install npm
 npm install
   install node(google it)
   install required modules
+npm install jade -g
 npm install --save express
 npm install --save mongodb
 npm install --save body-parser
