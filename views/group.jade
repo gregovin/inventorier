@@ -31,9 +31,9 @@ block content
 			form(action="/addRemove", method="POST", align="center")
 				.form-group
 					label(for="method") add or remove:&nbsp;
-						select#method(name="method", style="color:black")
-							option(value="add") add
-							option(value="remove") remove
+					select#method(name="method", style="color:black")
+						option(value="add") add
+						option(value="remove") remove
 				.form-group
 					label(for="item") item:
 					input#item.form-control(type="text", placeholder="Enter item" name="item")
