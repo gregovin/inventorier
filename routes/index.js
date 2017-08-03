@@ -140,6 +140,9 @@ router.post('/adduser', function(req, res){
 		}
 	});
 });
+router.get('/userAgreement', function(req, res){
+	res.render('userAgreement');
+})
 // profile page
 router.get('/home2', function(req, res){
 	if(req.cookies.username){
