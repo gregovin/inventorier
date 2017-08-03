@@ -158,7 +158,9 @@ router.get('/home2', function(req, res){
 						for(var i = 0; i< result.length; i++){
 							result[i].time = Math.floor((new Date().getTime())/3600000 - result[i].time);
 						}
-						console.log(result);
+						result.sort(function(a, b){
+							return a.time > b.time;
+						})
 						collectionb.find({username:req.cookies.username}).toArray(function(err, user){
 							if (err){
 								console.log(err);
@@ -648,7 +650,7 @@ router.get('/admin', function(req,res){
 					if(err){
 						console.log(err);
 					} else {
-						collection.find({bannedTil:{$gte: new Date().getTime}}).toArray(function(err, banned){
+						collection.find({bannedTil:{$gte: new Date().getTime()}}).toArray(function(err, banned){
 							if(err){
 								console.log(err);
 							} else {
@@ -697,33 +699,36 @@ router.post('/addAdmin', function(req,res){
 	})
 })
 router.post('/ban', function(req, res){
-	var username = req.body.username;
+	var username = req.body.user;
 	var time = req.body.time;
 	var url = "mongodb://localhost:27017/things"
 	var MongoClient = mongodb.MongoClient;
-	MongoClient(url, function(err, db){
+	MongoClient.connect(url, function(err, db){
 		if(err){
 			console.log(err)
 		} else {
-			var collection = collection("users")
-			collection.find({username:username, isAdmin:false}).toArray(function(err, result){
+			var collection = db.collection("users")
+			collection.find({username:username, admin:false}).toArray(function(err, result){
 				if(err){
 					console.log(err);
 				} else if (result.length){
+					console.log(result[0])
 					if(time === "inf"){
 						var banTime = 1/0;
 					} else {
-						var banTime = new Date().getTime + parseInt(time) * 6000;
+						var banTime = new Date().getTime() + parseInt(time) * 600000;
 					}
 					collection.update({username:username},{$set:{bannedTil:banTime}}, function(err, records){
 						if(err){
 							console.log(err);
 						} else {
+							console.log("this is good")
 							db.close();
 							res.clearCookie('error').redirect(303,'/admin');
 						}
 					})
 				} else {
+					console.log("found no users")
 					db.close();
 					res.cookie('error', 'user does not exist or is admin', {expire: new Date() + 9999}).redirect(303,'/admin')
 				}
@@ -740,11 +745,11 @@ router.post('/unban', function(req, res){
 			console.log(err);
 		} else {
 			var collection = db.collection('users');
-			collection.find({username:username,bannedTil:{$gte: new Date().getTime}}).toArray(function(err, result){
+			collection.find({username:username,bannedTil:{$gte: new Date().getTime()}}).toArray(function(err, result){
 				if(err){
 					console.log(err);
 				} else if(result.length) {
-					collection.update({username:username}, {$set:{bannedTil: new Date().getTime - 100}}, function(err, records){
+					collection.update({username:username}, {$set:{bannedTil: null}}, function(err, records){
 						if(err){
 							console.log(err)
 						} else {
@@ -768,7 +773,7 @@ router.post('/clear', function(req, res){
 			console.log(err);
 		} else {
 			var collection = db.collection('updates');
-			collection.deleteMany({time:{$lte: new Date.getTime - 86400000}}, function(err, obj){
+			collection.deleteMany({time:{$lte: new Date().getTime() - 86400000}}, function(err, obj){
 				if(err){
 					console.log(err);
 				} else {
@@ -804,13 +809,13 @@ router.post('/proccesSignIn', function(req,res){
 				if(err){
 					console.log(err);
 				} else if(result.length){
-					if(result[0].bannedTil === null || result.bannedTil > new Date().getTime){
+					if(result[0].bannedTil === null || result[0].bannedTil < new Date().getTime()){
 						res.clearCookie('error').clearCookie('isAdmin').cookie("username", result[0].username, {expire:new Date()+9999}).redirect(303, 'home2');
 					} else {
-						res.cookie('error', "you are banned", {expire:new Date() + 9999}).redirect(303, 'signin');
+						res.cookie('error', "you are banned for " + Math.ceil((result[0].bannedTil - (new Date().getTime()))/60000) + " minutes", {expire:new Date() + 9999}).redirect(303, '/signin');
 					}
 				} else {
-					res.cookie("error", "username and/or password is incorect", {expire:new Date() + 9999}).redirect(303, 'signin');
+					res.cookie("error", "username and/or password is incorect", {expire:new Date() + 9999}).redirect(303, '/signin');
 				}
 			});
 		}
