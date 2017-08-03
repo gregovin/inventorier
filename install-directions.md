@@ -14,6 +14,7 @@ npm install --save formidable
 npm install --save fs  
 npm install --save express-session  
 npm install --save parseurl  
+npm install --save mongo-sanitize  
 &ensp; start the mongodb server  
 mongod <data folder path, just drag and drop it into terminal>  
 &ensp; start and initialize mongodb(in the site directory and in a new tab)  
