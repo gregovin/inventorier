@@ -13,7 +13,20 @@ var parseurl = require('parseurl');
 router.use(require('body-parser').urlencoded({extended:true}));
 router.use(require('cookie-parser')(credentials.cookieSecret));
 router.use(express.static(__dirname + '/public'))
-
+/* Pages loc
+home : 89
+sign in : 786
+create acount : 93
+about : 819
+contact us : 589
+profile : 143
+groups : 262
+group : 348
+about2 : 823
+contact us 2: 609
+logout : 782
+admin : 637
+*/
 var hash = function(plaintext){
 	var encoded = '';
 		for(var i = 0; i < plaintext.length; i++){
@@ -72,18 +85,62 @@ var hash = function(plaintext){
 	}
 	return hash;
 }
-
+// home
 /* GET home page. */
 router.get('/', function(req, res, next) {
  	res.render('home', { title: 'home' });
 });
+// create acount
 router.get('/createAcount', function(req, res){
 	if (!req.cookies.error){
 		res.render('signup', {title: 'sign up'});
 	} else {
-    res.render('signup', {title: 'sign up' ,error:req.cookies.error});
-}
+    	res.render('signup', {title: 'sign up' ,error:req.cookies.error});
+	}
 });
+router.post('/adduser', function(req, res){
+	var MongoClient = mongodb.MongoClient;
+	var url = 'mongodb://localhost:27017/things';
+	MongoClient.connect(url, function(err, db){       // Connect to the server
+		if (err) {
+			console.log('Unable to connect to the Server:', err);
+		} else {
+			console.log('Connected to Server');
+			var collection = db.collection('users');
+			var querry = {username:req.body.usr};
+			var nameTaken = false;
+			if(req.body.psw === req.body.confirmPsw){ // Get the documents collection
+				var user1 = {username: req.body.usr, password: hash(req.body.psw), // Get the student data    	city: req.body.city, state: req.body.state, sex: req.body.sex,
+				email: req.body.email, profileImg:'/images/profiles/default.jpeg', admin:false, bannedTil:null};
+				collection.find(querry).toArray(function(err, result){
+						if(err){
+							console.log(err);
+						} else if(result.length){
+							db.close();
+							res.cookie("error", "username taken", {expire: new Date + 9999}).redirect(303, 'createAcount');
+						} else {
+							collection.insert([user1], function (err, result){	    // Insert the student data
+								if (err) {
+									console.log(err);
+								} else {
+									db.close();
+									res.clearCookie("error").redirect(303, "signin");
+								}
+
+							});
+						}
+					});
+
+				return ;
+			} else {
+				db.close()
+				res.cookie("error", "password must match confirm password").redirect(303, '/createAcount');
+				return ;
+			}
+		}
+	});
+});
+// profile page
 router.get('/home2', function(req, res){
 	if(req.cookies.username){
 		var MongoClient = mongodb.MongoClient;
@@ -202,6 +259,7 @@ router.post('/findUser', function(req, res){
 		}
 	})
 })
+// groups
 router.get('/groups', function(req, res){
 	if(req.cookies.username){
 		var MongoClient = mongodb.MongoClient;
@@ -287,6 +345,7 @@ router.post('/makeGroup', function(req, res){
 		}
 	});
 })
+// group
 router.get('/group', function(req, res){
 	if(req.cookies.username){
 		var MongoClient = mongodb.MongoClient;
@@ -527,6 +586,7 @@ router.post('/invite', function(req, res){
 		})
 	})
 })
+// contact us
 router.get('/contactUs', function(req, res){
 	var MongoClient = mongodb.MongoClient;
 	var url = "mongodb://localhost:27017/things";
@@ -546,6 +606,7 @@ router.get('/contactUs', function(req, res){
 		}
 	})
 })
+// contact us 2
 router.get('/contactUs2', function(req, res){
 	if (req.cookies.username){	
 		var MongoClient = mongodb.MongoClient;
@@ -573,6 +634,7 @@ router.get('/contactUs2', function(req, res){
 		res.redirect(303, '/signin')
 	}
 })
+// admin
 router.get('/admin', function(req,res){
 	if(req.cookies.username && req.cookies.isAdmin){
 		var MongoClient = mongodb.MongoClient;
@@ -717,51 +779,11 @@ router.post('/clear', function(req, res){
 		}
 	})
 })
+// logout
 router.get('/logout', function(req,res){
 	res.clearCookie('username').clearCookie("error").redirect(303, '/')
 });
-router.post('/adduser', function(req, res){
-	var MongoClient = mongodb.MongoClient;
-	var url = 'mongodb://localhost:27017/things';
-	MongoClient.connect(url, function(err, db){       // Connect to the server
-		if (err) {
-			console.log('Unable to connect to the Server:', err);
-		} else {
-			console.log('Connected to Server');
-			var collection = db.collection('users');
-			var querry = {username:req.body.usr};
-			var nameTaken = false;
-			if(req.body.psw === req.body.confirmPsw){ // Get the documents collection
-				var user1 = {username: req.body.usr, password: hash(req.body.psw), // Get the student data    	city: req.body.city, state: req.body.state, sex: req.body.sex,
-				email: req.body.email, profileImg:'/images/profiles/default.jpeg', admin:false, bannedTil:null};
-				collection.find(querry).toArray(function(err, result){
-						if(err){
-							console.log(err);
-						} else if(result.length){
-							db.close();
-							res.cookie("error", "username taken", {expire: new Date + 9999}).redirect(303, 'createAcount');
-						} else {
-							collection.insert([user1], function (err, result){	    // Insert the student data
-								if (err) {
-									console.log(err);
-								} else {
-									db.close();
-									res.clearCookie("error").redirect(303, "signin");
-								}
-
-							});
-						}
-					});
-
-				return ;
-			} else {
-				db.close()
-				res.cookie("error", "password must match confirm password").redirect(303, '/createAcount');
-				return ;
-			}
-		}
-	});
-});
+// sign in
 router.get('/signin', function(req,res){
 	if (req.cookies.error){
 		res.render('signin', {error:req.cookies.error})
@@ -794,9 +816,11 @@ router.post('/proccesSignIn', function(req,res){
 		}
 	})
 });
+// about
 router.get('/about', function(req, res){
 	res.render('about', {title:"about"});
 });
+//about 2
 router.get('/about2', function(req, res){
 	if(req.cookies.username && req.cookies.isAdmin){
 		res.render('about2', {title:"about", isAdmin:true});
@@ -806,28 +830,5 @@ router.get('/about2', function(req, res){
 		res.redirect(303, '/signin');
 	}
 });
-router.get('/thelist', function(req, res){
-var MongoClient = mongodb.MongoClient;
-var url = 'mongodb://localhost:27017/things';    // Define where the MongoDB server is
-MongoClient.connect(url, function (err, db) {// Connect to the server
-  if (err) {
-    console.log('Unable to connect to the Server', err);
-  } else { 		// We are connected
-console.log('Connection established to', url);
-    // Get the documents collection
-    var collection = db.collection('users');
-collection.find({}).toArray(function(err, result){// Find all students
-      if (err) {
-        res.send(err);
-      } else if (result.length) {
-        res.render('studentlist',{
-          // Pass the returned database documents to Jade
-          "studentlist" : result
-        });
-      } else {
-        res.send('No documents found');
-      }
-db.close(); //Close connection
-    });    } 	});	});
 
 module.exports = router;
