@@ -12,25 +12,22 @@ block content
             a(href="#", class="close", data-dismiss="alert", aria-label="close") &times;
             strong= error
     form(name="user", method="POST", action="/adduser", id="add_user")
-        span Username
-        span &nbsp;
-        input(type="text", placeholder="username", name="usr", id="usr", required='1')
-        br
-        br
-        span Email
-        span &nbsp;
-        input(type="email", placeholder="email", name="email",id="email", required='1')
-        br
-        br
-        span Password
-        span &nbsp;
-        input(type="password", placeholder="password", name="psw", id="psw", required='1')
-        br
-        br
-        span Confirm password
-        span &nbsp;
-        input(type="password", placeholder="confirm Password", name="confirmPsw", id='confirmPsw', required='1')
-        br
-        br 
-        button#submit_student(type="submit") submit
+        .form-group
+            label(for="username") username:
+            input#usr.form-control(type="text", placeholder="username", name="usr", required='1')
+        .form-group
+            label(for="email") email:
+            input#email.form-control(type="email", placeholder="email", name="email", required='1')
+        .form-group
+            label(for="password") password:
+            input#psw.form-control(type="password", placeholder="password", name="psw", required='1')
+        .form-group
+            label(for="confirm Password") Confirm Password
+            input#confirmPsw.form-control(type="password", placeholder="confirm Password", name="confirmPsw", required='1')
+        .check-box
+            label(for="user Agreement")
+                input(type="checkbox", value="", required="1")
+                | &nbsp;agree to the 
+                a(href='/userAgreement', target="_blank") user agreement 
+        button#submit(type="submit") submit
 
