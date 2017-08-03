@@ -16,17 +16,17 @@ router.use(express.static(__dirname + '/public'))
 var sanitize = require('mongo-sanitize')
 /* Pages loc
 home : 89
-sign in : 786
-create acount : 93
-about : 819
-contact us : 589
-profile : 143
-groups : 262
-group : 348
-about2 : 823
-contact us 2: 609
-logout : 782
-admin : 637
+sign in : 795
+create acount : 94
+about : 828
+contact us : 595
+profile : 147
+groups : 268
+group : 354
+about2 : 832
+contact us 2: 615
+logout : 791
+admin : 643
 */
 var hash = function(plaintext){
 	var encoded = '';
