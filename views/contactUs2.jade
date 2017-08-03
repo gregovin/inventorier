@@ -1,4 +1,4 @@
-extends layout
+extends layout1
 block content
 	unless isAdmin
 		include ./bsnavbar2.jade
@@ -9,8 +9,9 @@ block content
 	br
 	br
 	ul
-	- var string = ''
-	- for(var i = 0; i < admins.length; i++){
-		- string = admins[i].username +' : ' + admins[i].email;
-		li= string
-	- }
+	div(style="color:white")
+		- var string = ''
+		- for(var i = 0; i < admins.length; i++){
+			- string = admins[i].username +' : ' + admins[i].email;
+			li= string
+		- }
