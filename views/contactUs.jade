@@ -1,0 +1,13 @@
+extends layout
+block content
+	include ./bsnavbar.jade
+	br
+	br
+	br
+	br
+	ul
+	- var string = ''
+	- for(var i = 0; i < admins.length; i++){
+		- string = admins[i].username +' : ' + admins[i].email;
+		li= string
+	- }

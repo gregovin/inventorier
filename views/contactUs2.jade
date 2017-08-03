@@ -1,0 +1,16 @@
+extends layout
+block content
+	unless isAdmin
+		include ./bsnavbar2.jade
+	if isAdmin
+		include ./bsnavbar3.jade
+	br
+	br
+	br
+	br
+	ul
+	- var string = ''
+	- for(var i = 0; i < admins.length; i++){
+		- string = admins[i].username +' : ' + admins[i].email;
+		li= string
+	- }
