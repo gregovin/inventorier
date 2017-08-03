@@ -14,19 +14,20 @@ block content
 			strong= error
 	div(style="color:white;")
 		if group
-			table(padding="10", border='1', align="center", style="border-color:white;")
-				tr
-					td id
-					td item
-					td qty
-					td description
-				- for(var i = 0; i< group.length; i++){
+			div(style="color:black")
+				table(padding="10", border='1', align="center", style="border-color:black;background-color:white")
 					tr
-						td= group[i].id
-						td= group[i].item
-						td= group[i].qty
-						td= group[i].description
-				- }
+						td id
+						td item
+						td qty
+						td description
+					- for(var i = 0; i< group.length; i++){
+						tr
+							td= group[i].id
+							td= group[i].item
+							td= group[i].qty
+							td= group[i].description
+					- }
 			h2(align="center") add/remove items
 			form(action="/addRemove", method="POST", align="center")
 				.form-group
