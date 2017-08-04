@@ -778,7 +778,7 @@ router.post('/clear', function(req, res){
 			console.log(err);
 		} else {
 			var collection = db.collection('updates');
-			collection.deleteMany({time:{$lte: new Date().getTime() - 86400000}}, function(err, obj){
+			collection.deleteMany({time:{$lte: new Date().getTime() - 24}}, function(err, obj){
 				if(err){
 					console.log(err);
 				} else {
