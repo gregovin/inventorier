@@ -794,9 +794,11 @@ router.get('/logout', function(req,res){
 });
 // sign in
 router.get('/signin', function(req,res){
-	if (req.cookies.error){
+	if (req.cookies.username){
+		res.redirect(303, '/home2')
+	}else if(req.cookies.error){
 		res.render('signin', {error:req.cookies.error})
-	}else{
+	} else {
 		res.render('signin')
 	}
 });
@@ -824,6 +826,9 @@ router.post('/proccesSignIn', function(req,res){
 			});
 		}
 	})
+});
+router.get('/forgotPsw', function(req, res){
+	res.render('forgotPsw')
 });
 // about
 router.get('/about', function(req, res){
