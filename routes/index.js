@@ -17,18 +17,19 @@ var sanitize = require('mongo-sanitize')
 /* Pages loc
 home : 89
 sign in : 795
+forgot Password : 83
 create acount : 94
-about : 828
+about : 835
 contact us : 595
 profile : 147
 groups : 268
 group : 354
-about2 : 832
+about2 : 839
 contact us 2: 615
 logout : 791
 admin : 643
 */
-var hash = function(plaintext){
+var hash = function(plaintext){0
 	var encoded = '';
 		for(var i = 0; i < plaintext.length; i++){
 			encoded += plaintext.charCodeAt(i);
@@ -827,6 +828,7 @@ router.post('/proccesSignIn', function(req,res){
 		}
 	})
 });
+// forgot psw
 router.get('/forgotPsw', function(req, res){
 	res.render('forgotPsw')
 });
